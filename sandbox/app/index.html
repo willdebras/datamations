@@ -143,6 +143,7 @@
       </div>
     </div>
 
+    <script src="./scripts/config.js"></script>
     <script src="./scripts/utils.js"></script>
     <script src="./scripts/layout.js"></script>
     <script src="./scripts/hack-facet-view.js"></script>
@@ -164,26 +165,40 @@
       //   autoPlay: false
       // });
 
-      d3.json(
-      // "https://raw.githubusercontent.com/microsoft/datamations/parse-ggplot2/sandbox/errorbar/specs_with_facet.json"
-      // 'https://raw.githubusercontent.com/microsoft/datamations/parse-ggplot2/sandbox/errorbar/specs_no_facet.json'
-      // "https://raw.githubusercontent.com/microsoft/datamations/parse-ggplot2/sandbox/errorbar/zoomed_specs.json"
-      // "https://raw.githubusercontent.com/microsoft/datamations/parse-ggplot2/sandbox/errorbar/double_errorbar.json"
-      // "https://raw.githubusercontent.com/microsoft/datamations/parse-ggplot2/sandbox/errorbar/erroring_errorbar.json"
-      // "https://raw.githubusercontent.com/microsoft/datamations/parse-ggplot2/sandbox/ggplot2/offset_x_with_color.json"
-      // "https://raw.githubusercontent.com/microsoft/datamations/parse-ggplot2/sandbox/ggplot2/offset_x_second_row.json"
-      // "https://raw.githubusercontent.com/microsoft/datamations/parse-ggplot2/sandbox/ggplot2/offset_x_second_column.json"
-      // "https://raw.githubusercontent.com/microsoft/datamations/parse-ggplot2/sandbox/errorbar/dual_legend_missing_last_frame.json"
-      // "https://raw.githubusercontent.com/microsoft/datamations/parse-ggplot2/sandbox/errorbar/no_facets_errorbar_off_on_zoom.json"
-      // "https://raw.githubusercontent.com/microsoft/datamations/parse-ggplot2/sandbox/ggplot2/variable_x_only_jitter_off.json"
-      // "https://raw.githubusercontent.com/microsoft/datamations/parse-ggplot2/sandbox/ggplot2/shiftgrids_example.json"
-      // "https://raw.githubusercontent.com/microsoft/datamations/parse-ggplot2/sandbox/generalized_specs/one_group.json"
-      // "https://raw.githubusercontent.com/microsoft/datamations/parse-ggplot2/sandbox/generalized_specs/two_groups.json"
-      // "https://raw.githubusercontent.com/microsoft/datamations/parse-ggplot2/sandbox/generalized_specs/three_groups.json"
-      "https://raw.githubusercontent.com/microsoft/datamations/parse-ggplot2/sandbox/errorbar/row_facet_x_errorbars_off.json"
-      ).then((res) => {
-        // res[2].meta.axes = true;
+      d3.json("https://raw.githubusercontent.com/microsoft/datamations/main/sandbox/generalized_specs/two_groups.json").then((res) => {
 
+        const fixEncoding = (encoding) => {
+          if (encoding.x.field === "x") {
+            encoding.x.field = CONF.X_FIELD;
+          }
+
+          if (encoding.y.field === "y") {
+            encoding.y.field = CONF.Y_FIELD;
+          }
+        }
+
+        res.forEach(d => {
+          if (d.spec) {
+            if (d.spec.layer) {
+              d.spec.layer.forEach(x => fixEncoding(x.encoding));
+            } else {
+              fixEncoding(d.spec.encoding);
+            }
+          } else {
+            fixEncoding(d.encoding);
+          }
+
+          if (d.data.values.some(x => x.hasOwnProperty("x"))) {
+            d.data.values.forEach(x => {
+              x[CONF.X_FIELD] = x.x;
+              x[CONF.Y_FIELD] = x.y;
+
+              delete x.x;
+              delete x.y;
+            });
+          }
+        })
+        
         init("app", {
           specs: res
         });

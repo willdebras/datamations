@@ -429,6 +429,7 @@ async function transformSpecs() {
       vegaLiteSpecs[i] = gridSpec;
     } else if (parse === "jitter") {
       vegaLiteSpecs[i] = await getJitterSpec(vlSpec);
+      console.log(JSON.stringify( vegaLiteSpecs[i] ))
     } else if (vlSpec.layer || (vlSpec.spec && vlSpec.spec.layer)) {
       const arr = splitLayers(vlSpec);
 
