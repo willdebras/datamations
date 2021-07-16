@@ -22,9 +22,9 @@
         left: 0;
       }
 
-      .vega-vis-wrapper * {
+      /* .vega-vis-wrapper * {
         pointer-events: none !important;
-      }
+      } */
 
       .vega-vis-wrapper .vega-vis svg {
         background-color: transparent !important;
@@ -180,11 +180,16 @@
         res.forEach(d => {
           if (d.spec) {
             if (d.spec.layer) {
-              d.spec.layer.forEach(x => fixEncoding(x.encoding));
+              d.spec.layer.forEach(x => {
+                x.mark.tooltip = true;
+                fixEncoding(x.encoding);
+              });
             } else {
+              d.spec.mark.tooltip = true;
               fixEncoding(d.spec.encoding);
             }
           } else {
+            d.mark.tooltip = true;
             fixEncoding(d.encoding);
           }
 
