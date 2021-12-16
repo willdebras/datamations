@@ -424,7 +424,7 @@ function App(id, { specUrls, specs, autoPlay = false, frameDur, frameDel }) {
       if (Array.isArray(vlSpec)) continue; // just sanity check, making sure that it is not an array
 
       // if filter has empty `oneOf`, then generate empty spec and avoid any further processing
-      if (vlSpec.transform && vlSpec.transform[0].filter.oneOf.length === 0) {
+      if (vlSpec.transform && vlSpec.transform[0].filter && vlSpec.transform[0].filter.oneOf.length === 0) {
         const emptySpec = getEmptySpec(vlSpec);
 
         metas[i] = emptySpec.meta;

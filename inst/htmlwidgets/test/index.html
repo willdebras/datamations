@@ -146,7 +146,7 @@
         <div class="controls-wrapper">
           <div class="control-bar">
             <div class="button-wrapper">
-              <button onclick="app1.play()">Replay</button>
+              <button onclick="app.play()">Replay</button>
             </div>
             <div class="slider-wrapper">
               <input
@@ -154,7 +154,7 @@
                 type="range"
                 min="0"
                 value="0"
-                onchange="app1.onSlide()"
+                onchange="app.onSlide()"
               />
             </div>
           </div>
@@ -174,164 +174,227 @@
     <script src="../js/layout.js"></script>
     <script src="../js/hack-facet-view.js"></script>
     <script src="../js/app.js"></script>
+
     <script>
-      const app1 = App("app", {
+      const data = [
+        {
+          weight: 150,
+          height: 574,
+        },
+        {
+          weight: 160,
+          height: 580,
+        },
+        {
+          weight: 145,
+          height: 540,
+        },
+        {
+          weight: 190,
+          height: 590,
+        },
+        {
+          weight: 198,
+          height: 560,
+        },
+        {
+          weight: 170,
+          height: 566,
+        },
+        {
+          weight: 176,
+          height: 582,
+        },
+        {
+          weight: 188,
+          height: 562,
+        },
+        {
+          weight: 167,
+          height: 534,
+        },
+        {
+          weight: 138,
+          height: 570,
+        },
+      ].map((d, i) => {
+        const weight_kg = d.weight / 2.205;
+        const height_m = d.height / 3.281 / 100;
+
+        return {
+          ...d,
+          gemini_id: i + 1,
+          weight_kg,
+          height_m,
+          bmi: weight_kg / (height_m * height_m),
+        };
+      });
+
+      const scatter_lbs_feet = {
+        $schema: CONF.$SCHEME,
+        meta: { description: "lbs / feet" },
+        width: 300,
+        height: 300,
+        data: { values: data },
+        mark: { type: "circle" },
+        encoding: {
+          x: {
+            field: "weight",
+            type: "quantitative",
+            axis: { title: "weight (lbs)" },
+          },
+          y: {
+            field: "height",
+            type: "quantitative",
+            axis: { title: "height (feet)" },
+          },
+        },
+      };
+
+      const scatter_kg_m = {
+        $schema: CONF.$SCHEME,
+        width: 300,
+        height: 300,
+        meta: { description: "kg / meters" },
+        data: { values: data },
+        mark: { type: "circle" },
+        encoding: {
+          x: {
+            field: "weight_kg",
+            type: "quantitative",
+            axis: { title: "weight (kg)" },
+          },
+          y: {
+            field: "height_m",
+            type: "quantitative",
+            axis: { title: "height (m)" },
+          },
+        },
+      };
+
+      const bar_bmi_id = {
+        $schema: CONF.$SCHEME,
+        width: 300,
+        height: 300,
+        meta: { description: "bmi for each datapoint" },
+        data: { values: data },
+        mark: { type: "circle" },
+        encoding: {
+          x: {
+            field: "bmi",
+            type: "quantitative",
+            axis: { title: "bmi" },
+            scale: {
+              domain: [
+                d3.min(data, (d) => d.bmi) - 1,
+                d3.max(data, (d) => d.bmi) + 1,
+              ],
+            },
+          },
+          y: {
+            field: "gemini_id",
+            type: "nominal",
+            axis: { title: "id" },
+          },
+        },
+      };
+
+      const stacked_bmi_binned = {
+        $schema: CONF.$SCHEME,
+        width: 300,
+        height: 300,
+        meta: { description: "bmi binned and stacked" },
+        data: { values: data },
+        mark: { type: "circle" },
+        transform: [
+          {
+            bin: true,
+            field: "bmi",
+            as: "binned_bmi",
+          },
+          {
+            window: [{ op: "rank", as: "bmi_rank" }],
+            groupby: ["binned_bmi_end"],
+          },
+        ],
+        encoding: {
+          x: {
+            field: "binned_bmi",
+            type: "quantitative",
+            axis: { title: "bmi" },
+            bin: {
+              binned: true,
+              step: 1,
+            },
+            scale: {
+              domain: [
+                d3.min(data, (d) => d.bmi) - 1,
+                d3.max(data, (d) => d.bmi) + 1,
+              ],
+            },
+          },
+          y: {
+            field: "bmi_rank",
+            type: "quantitative",
+            axis: { title: "count" },
+            scale: {
+              domain: [0.5, 5],
+            },
+          },
+        },
+      };
+
+      const bars_bbmi_binned = {
+        $schema: CONF.$SCHEME,
+        width: 300,
+        height: 300,
+        meta: { description: "bmi binned bars" },
+        data: { values: data },
+        mark: { type: "bar" },
+        transform: [
+          {
+            bin: true,
+            field: "bmi",
+            as: "binned_bmi",
+          },
+        ],
+        encoding: {
+          x: {
+            field: "binned_bmi",
+            type: "quantitative",
+            axis: { title: "bmi" },
+            bin: {
+              binned: true,
+              step: 1,
+            },
+            scale: {
+              domain: [
+                d3.min(data, (d) => d.bmi) - 1,
+                d3.max(data, (d) => d.bmi) + 1,
+              ],
+            },
+          },
+          x2: { field: "binned_bmi_end" },
+          y: {
+            field: "bmi_rank",
+            type: "quantitative",
+            aggregate: "count",
+            axis: { title: "count" },
+            scale: {
+              domain: [0.5, 5],
+            },
+          },
+        },
+      };
+
+      const app = App("app", {
         specs: [
-  {
-    "height": 300,
-    "width": 300,
-    "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
-    "meta": {
-      "parse": "grid",
-      "description": "Initial data"
-    },
-    "data": {
-      "values": [
-        {
-          "n": 100
-        }
-      ]
-    },
-    "mark": {
-      "type": "point",
-      "filled": true
-    },
-    "encoding": {
-      "x": {
-        "field": "datamations_x",
-        "type": "quantitative",
-        "axis": null
-      },
-      "y": {
-        "field": "datamations_y",
-        "type": "quantitative",
-        "axis": null
-      }
-    }
-  },
-  {
-    "height": 300,
-    "width": 300,
-    "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
-    "meta": {
-      "parse": "grid",
-      "description": "Group by group",
-      "splitField": "group",
-      "axes": false
-    },
-    "data": {
-      "values": [
-        {
-          "group": "group1",
-          "n": 5
-        },
-        {
-          "group": "group10",
-          "n": 5
-        },
-        {
-          "group": "group11",
-          "n": 5
-        },
-        {
-          "group": "group12",
-          "n": 5
-        },
-        {
-          "group": "group13",
-          "n": 5
-        },
-        {
-          "group": "group14",
-          "n": 5
-        },
-        {
-          "group": "group15",
-          "n": 5
-        },
-        {
-          "group": "group16",
-          "n": 5
-        },
-        {
-          "group": "group17",
-          "n": 5
-        },
-        {
-          "group": "group18",
-          "n": 5
-        },
-        {
-          "group": "group19",
-          "n": 5
-        },
-        {
-          "group": "group2",
-          "n": 5
-        },
-        {
-          "group": "group20",
-          "n": 5
-        },
-        {
-          "group": "group3",
-          "n": 5
-        },
-        {
-          "group": "group4",
-          "n": 5
-        },
-        {
-          "group": "group5",
-          "n": 5
-        },
-        {
-          "group": "group6",
-          "n": 5
-        },
-        {
-          "group": "group7",
-          "n": 5
-        },
-        {
-          "group": "group8",
-          "n": 5
-        },
-        {
-          "group": "group9",
-          "n": 5
-        }
-      ]
-    },
-    "mark": {
-      "type": "point",
-      "filled": true
-    },
-    "encoding": {
-      "x": {
-        "field": "datamations_x",
-        "type": "quantitative",
-        "axis": null
-      },
-      "y": {
-        "field": "datamations_y",
-        "type": "quantitative",
-        "axis": null
-      },
-      "color": {
-        "field": null,
-        "type": "nominal"
-      },
-      "tooltip": [
-        {
-          "field": "group",
-          "type": "nominal"
-        }
-      ]
-    }
-  }
-] 
-  
+          scatter_lbs_feet,
+          scatter_kg_m,
+          bar_bmi_id,
+          stacked_bmi_binned,
+          bars_bbmi_binned,
+        ],
       });
     </script>
   </body>
